@@ -1,6 +1,6 @@
 # server builder
 
-FROM golang:1.24 AS server_builder
+FROM golang:1.25-alpine AS server_builder
 
 ENV APP_HOME=/code/bbs-go/server
 WORKDIR "$APP_HOME"
@@ -12,7 +12,7 @@ RUN CGO_ENABLED=0 go build -v -o bbs-go main.go && chmod +x bbs-go
 
 
 # site builder
-FROM node:20-alpine AS site_builder
+FROM node:24-alpine AS site_builder
 
 ENV APP_HOME=/code/bbs-go/site
 WORKDIR "$APP_HOME"
@@ -26,7 +26,7 @@ RUN pnpm build
 
 
 # admin builder
-FROM node:20-alpine AS admin_builder
+FROM node:24-alpine AS admin_builder
 
 ENV APP_HOME=/code/bbs-go/admin
 WORKDIR "$APP_HOME"
@@ -39,7 +39,7 @@ RUN pnpm install
 RUN pnpm build
 
 # run
-FROM node:20-alpine
+FROM node:24-alpine
 
 ENV APP_HOME=/app/bbs-go
 WORKDIR "$APP_HOME"

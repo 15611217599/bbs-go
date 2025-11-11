@@ -1,0 +1,115 @@
+name: Deploy to K8s
+
+on:
+  push:
+    branches: [main, master]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Deploy to K8s
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: bbs-go
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: bbs-go
+            namespace: bbs-go
+          spec:
+            replicas: 2
+            selector:
+              matchLabels:
+                app: bbs-go
+            template:
+              metadata:
+                labels:
+                  app: bbs-go
+              spec:
+                containers:
+                - name: bbs-go
+                  image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+                  imagePullPolicy: Always
+                  ports:
+                  - containerPort: 8082
+                  - containerPort: 3000
+                  env:
+                  - name: BBSGO_ENV
+                    value: prod
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: bbs-go
+            namespace: bbs-go
+          spec:
+            type: ClusterIP
+            ports:
+            - name: api
+              port: 8082
+              targetPort: 8082
+            - name: web
+              port: 3000
+              targetPort: 3000
+            selector:
+              app: bbs-go
+          ---
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: bbs-go
+            namespace: bbs-go
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+          spec:
+            ingressClassName: traefik
+            tls:
+            - hosts:
+              - bbs.rabbitvps.com
+              secretName: bbs-go-tls
+            rules:
+            - host: bbs.rabbitvps.com
+              http:
+                paths:
+                - path: /api
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: bbs-go
+                      port:
+                        number: 8082
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: bbs-go
+                      port:
+                        number: 3000
+          EOF
+          
+          kubectl rollout status deployment/bbs-go -n bbs-go --timeout=5m
