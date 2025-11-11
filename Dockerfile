@@ -68,7 +68,7 @@ Logger:
   MaxAge: 10
   MaxBackups: 10
 DB:
-  Url: root:@tcp(basic-tidb.tidb-cluster.svc.cluster.local:4000)/bbsgo_db?charset=utf8mb4&parseTime=True&multiStatements=true&loc=Local
+  Url: root:@tcp(basic-tidb.tidb-cluster.svc.cluster.local:4000)/bbsgo_db?charset=utf8mb4&parseTime=True&multiStatements=true&loc=Local&tidb_skip_isolation_level_check=1
   MaxIdleConns: 50
   MaxOpenConns: 200
 Uploader:
