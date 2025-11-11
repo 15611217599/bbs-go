@@ -25,11 +25,17 @@ jobs:
           docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
-      - name: Setup Kubeconfig
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
         run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}"
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
           
       - name: Verify K8s Connection
         run: |
