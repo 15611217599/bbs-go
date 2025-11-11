@@ -4,21 +4,25 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net/http"
-	"net/url"
+	"strings"
 	"sync"
 
-	"github.com/tencentyun/cos-go-sdk-v5"
-
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/mlogclub/simple/common/strs"
 
 	"bbs-go/internal/models/dto"
 )
 
-// 腾讯云cos
+// MinIO 对象存储（复用腾讯云COS的配置字段）
+// 字段映射：
+// - Bucket: MinIO Bucket 名称
+// - Region: MinIO 服务地址（如 minio.example.com:9000 或 http://minio.example.com:9000）
+// - SecretId: MinIO Access Key
+// - SecretKey: MinIO Secret Key
 type TencentCosUploader struct {
 	m          sync.Mutex
-	client     *cos.Client
+	client     *minio.Client
 	currentCfg dto.UploadConfig
 }
 
@@ -32,19 +36,28 @@ func (u *TencentCosUploader) PutImage(cfg *dto.UploadConfig, data []byte, conten
 
 func (u *TencentCosUploader) PutObject(cfg *dto.UploadConfig, key string, data []byte, contentType string) (string, error) {
 	if err := u.initClient(cfg); err != nil {
-		return "", nil
-	}
-
-	opt := &cos.ObjectPutOptions{
-		ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{
-			ContentType: contentType,
-		},
-	}
-	if _, err := u.client.Object.Put(context.Background(), key, bytes.NewReader(data), opt); err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s/%s", u.client.BaseURL.BucketURL, key), nil
+	ctx := context.Background()
+	reader := bytes.NewReader(data)
+
+	_, err := u.client.PutObject(ctx, cfg.TencentCos.Bucket, key, reader, int64(len(data)), minio.PutObjectOptions{
+		ContentType: contentType,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	// 生成访问 URL
+	endpoint := u.cleanEndpoint(cfg.TencentCos.Region)
+	useSSL := strings.HasPrefix(cfg.TencentCos.Region, "https://")
+	protocol := "http"
+	if useSSL {
+		protocol = "https"
+	}
+	
+	return fmt.Sprintf("%s://%s/%s/%s", protocol, endpoint, cfg.TencentCos.Bucket, key), nil
 }
 
 func (u *TencentCosUploader) CopyImage(cfg *dto.UploadConfig, originUrl string) (string, error) {
@@ -64,15 +77,18 @@ func (u *TencentCosUploader) initClient(cfg *dto.UploadConfig) error {
 	defer u.m.Unlock()
 
 	if cfg != nil {
-		bucketURL, _ := url.Parse(fmt.Sprintf("https://%s.cos.%s.myqcloud.com", cfg.TencentCos.Bucket, cfg.TencentCos.Region))
-		serviceURL, _ := url.Parse(fmt.Sprintf("https://cos.%s.myqcloud.com", cfg.TencentCos.Region))
-		baseURL := &cos.BaseURL{BucketURL: bucketURL, ServiceURL: serviceURL}
-		u.client = cos.NewClient(baseURL, &http.Client{
-			Transport: &cos.AuthorizationTransport{
-				SecretID:  cfg.TencentCos.SecretId,
-				SecretKey: cfg.TencentCos.SecretKey,
-			},
+		endpoint := u.cleanEndpoint(cfg.TencentCos.Region)
+		useSSL := strings.HasPrefix(cfg.TencentCos.Region, "https://")
+
+		client, err := minio.New(endpoint, &minio.Options{
+			Creds:  credentials.NewStaticV4(cfg.TencentCos.SecretId, cfg.TencentCos.SecretKey, ""),
+			Secure: useSSL,
 		})
+		if err != nil {
+			return err
+		}
+
+		u.client = client
 		u.currentCfg = *cfg
 	}
 
@@ -92,4 +108,10 @@ func (u *TencentCosUploader) isCfgChange(cfg *dto.UploadConfig) bool {
 	}
 
 	return false
+}
+
+func (u *TencentCosUploader) cleanEndpoint(endpoint string) string {
+	endpoint = strings.TrimPrefix(endpoint, "https://")
+	endpoint = strings.TrimPrefix(endpoint, "http://")
+	return strings.TrimRight(endpoint, "/")
 }

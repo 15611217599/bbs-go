@@ -4,17 +4,7 @@
   <footer class="footer">
     <div class="content container">
       <div>
-        <nuxt-link to="/about">
-          {{ $t("component.myFooter.about") }}
-        </nuxt-link>
-        &nbsp;
-        <nuxt-link to="/links">
-          {{ $t("component.myFooter.links") }}
-        </nuxt-link>
-      </div>
-      <div>
-        Powered by
-        <a href="https://bbs-go.com" target="_blank" class="light">BBS-GO</a>
+        <!-- 已移除底部链接 -->
       </div>
     </div>
   </footer>
@@ -27,6 +17,7 @@
   background: none;
   text-align: left;
   margin: 0 10px;
+
   a {
     color: var(--text-color3);
     text-decoration: none;

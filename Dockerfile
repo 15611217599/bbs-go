@@ -56,23 +56,39 @@ RUN chmod +x ${APP_HOME}/start.sh
 
 # 创建默认配置文件
 RUN cat > ${APP_HOME}/server/bbs-go.yaml <<'EOF'
-Language: zh-CN
-Port: 8082
-BaseURL: /
-AllowedOrigins:
-  - "*"
-Installed: false
-Logger:
-  Filename: /tmp/bbs-go.log
-  MaxSize: 100
-  MaxAge: 10
-  MaxBackups: 10
-DB:
-  Url: root:@tcp(basic-tidb.tidb-cluster.svc.cluster.local:4000)/bbsgo_db?charset=utf8mb4&parseTime=True&multiStatements=true&loc=Local&tidb_skip_isolation_level_check=1
-  MaxIdleConns: 50
-  MaxOpenConns: 200
-Uploader:
-  Enable: Local
+language: zh-CN
+baseURL: /
+port: 8082
+ipDataPath: ""
+allowedOrigins:
+- '*'
+installed: true
+logger:
+  filename: /tmp/bbs-go.log
+  maxSize: 100
+  maxAge: 10
+  maxBackups: 10
+db:
+  url: root:123456sS#@tcp(basic-tidb.tidb-cluster.svc.cluster.local:4000)/bbsgo_db?charset=utf8mb4&parseTime=True&multiStatements=true&loc=Local&tidb_skip_isolation_level_check=1
+  maxIdleConns: 50
+  maxOpenConns: 200
+  connMaxIdleTimeSeconds: 0
+  connMaxLifetimeSeconds: 0
+smtp:
+  host: ""
+  port: ""
+  username: ""
+  password: ""
+  ssl: false
+search:
+  indexPath: ""
+baiduSEO:
+  site: ""
+  token: ""
+smSEO:
+  site: ""
+  userName: ""
+  token: ""
 EOF
 
 EXPOSE 8082 3000
