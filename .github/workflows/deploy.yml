@@ -33,9 +33,10 @@ jobs:
       - name: Configure kubectl
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}"
-          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
+          echo "Kubeconfig configured successfully"
+          head -n 3 ~/.kube/config
           
       - name: Verify K8s Connection
         run: |
