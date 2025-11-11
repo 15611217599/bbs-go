@@ -7,6 +7,7 @@ WORKDIR "$APP_HOME"
 
 COPY ./server ./
 RUN go env -w GOPROXY=https://goproxy.cn,direct
+RUN go mod tidy
 RUN go mod download
 RUN CGO_ENABLED=0 go build -v -o bbs-go main.go && chmod +x bbs-go
 
