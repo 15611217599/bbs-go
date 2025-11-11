@@ -54,7 +54,7 @@ type InstallReq struct {
 }
 
 func (r DbConfigReq) GetConnStr() string {
-	return r.Username + ":" + r.Password + "@tcp(" + r.Host + ":" + r.Port + ")/" + r.Database + "?charset=utf8mb4&parseTime=True&multiStatements=true&loc=Local"
+	return r.Username + ":" + r.Password + "@tcp(" + r.Host + ":" + r.Port + ")/" + r.Database + "?charset=utf8mb4&parseTime=True&multiStatements=true&loc=Local&tidb_skip_isolation_level_check=1"
 }
 
 func TestDbConnection(req DbConfigReq) error {
