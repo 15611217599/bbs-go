@@ -20,6 +20,7 @@ require (
 	github.com/kataras/iris/v12 v12.2.11
 	github.com/lionsoul2014/ip2region/binding/golang v0.0.0-20240510055607-89e20ab7b6c6
 	github.com/microcosm-cc/bluemonday v1.0.27
+	github.com/minio/minio-go/v7 v7.0.63
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mlogclub/simple v1.2.33
 	github.com/panjf2000/ants/v2 v2.10.0
