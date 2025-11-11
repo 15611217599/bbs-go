@@ -51,13 +51,37 @@ jobs:
           metadata:
             name: bbs-go
           ---
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: bbs-go-config
+            namespace: bbs-go
+          data:
+            bbs-go.yaml: |
+              Port: 8082
+              BaseURL: /
+              AllowedOrigins:
+                - "*"
+              Installed: false
+              Logger:
+                Filename: /tmp/bbs-go.log
+                MaxSize: 100
+                MaxAge: 10
+                MaxBackups: 10
+              DB:
+                Url: root:@tcp(basic-tidb.tidb-cluster.svc.cluster.local:4000)/bbsgo_db?charset=utf8mb4&parseTime=True&multiStatements=true&loc=Local
+                MaxIdleConns: 50
+                MaxOpenConns: 200
+              Uploader:
+                Enable: Local
+          ---
           apiVersion: apps/v1
           kind: Deployment
           metadata:
             name: bbs-go
             namespace: bbs-go
           spec:
-            replicas: 2
+            replicas: 1
             selector:
               matchLabels:
                 app: bbs-go
@@ -76,6 +100,14 @@ jobs:
                   env:
                   - name: BBSGO_ENV
                     value: prod
+                  volumeMounts:
+                  - name: config
+                    mountPath: /app/bbs-go/server/bbs-go.yaml
+                    subPath: bbs-go.yaml
+                volumes:
+                - name: config
+                  configMap:
+                    name: bbs-go-config
           ---
           apiVersion: v1
           kind: Service
