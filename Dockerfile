@@ -54,6 +54,27 @@ COPY --from=admin_builder /code/bbs-go/admin/dist ./server/admin
 COPY ./start.sh ${APP_HOME}/start.sh
 RUN chmod +x ${APP_HOME}/start.sh
 
+# 创建默认配置文件
+RUN cat > ${APP_HOME}/server/bbs-go.yaml <<'EOF'
+Language: zh-CN
+Port: 8082
+BaseURL: /
+AllowedOrigins:
+  - "*"
+Installed: false
+Logger:
+  Filename: /tmp/bbs-go.log
+  MaxSize: 100
+  MaxAge: 10
+  MaxBackups: 10
+DB:
+  Url: root:@tcp(basic-tidb.tidb-cluster.svc.cluster.local:4000)/bbsgo_db?charset=utf8mb4&parseTime=True&multiStatements=true&loc=Local
+  MaxIdleConns: 50
+  MaxOpenConns: 200
+Uploader:
+  Enable: Local
+EOF
+
 EXPOSE 8082 3000
 
 CMD ["./start.sh"]
