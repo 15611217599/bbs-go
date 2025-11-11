@@ -25,11 +25,19 @@ jobs:
           docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
-      - name: Deploy to K8s
+      - name: Setup Kubeconfig
         run: |
           mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
           
+      - name: Verify K8s Connection
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+          
+      - name: Deploy to K8s
+        run: |
           kubectl apply -f - <<EOF
           apiVersion: v1
           kind: Namespace
