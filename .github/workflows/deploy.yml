@@ -58,6 +58,7 @@ jobs:
             namespace: bbs-go
           data:
             bbs-go.yaml: |
+              Language: zh-CN
               Port: 8082
               BaseURL: /
               AllowedOrigins:
