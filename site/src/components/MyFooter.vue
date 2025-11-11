@@ -4,7 +4,9 @@
   <footer class="footer">
     <div class="content container">
       <div>
-        <!-- 已移除底部链接 -->
+        <nuxt-link to="/links">
+           {{ $t("component.myFooter.links") }}
+        </nuxt-link>
       </div>
     </div>
   </footer>
