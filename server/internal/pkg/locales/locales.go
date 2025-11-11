@@ -37,7 +37,6 @@ func Init() error {
 		v := viper.New()
 		v.SetConfigFile(file)
 		v.SetConfigType("yaml")
-		v.WatchConfig()
 
 		if err := v.ReadInConfig(); err != nil {
 			return fmt.Errorf("failed to read locale file %s: %w", file, err)
@@ -45,6 +44,7 @@ func Init() error {
 
 		locale := getLocaleByFile(file)
 		viperInstances[locale] = v
+		slog.Info("Loaded locale file", "locale", locale, "file", file)
 	}
 
 	return nil
